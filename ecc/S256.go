@@ -60,6 +60,6 @@ func NewS256Point(bx, by *big.Int) (*s256Point, error) {
 	return &s256Point{sp, n}, nil
 }
 
-func (s s256Point) sRMul(coefficient *big.Int) error {
+func (s s256Point) SRMul(coefficient *big.Int) error {
 	return s.FastRMul(coefficient.Mod(coefficient, s.n))
 }

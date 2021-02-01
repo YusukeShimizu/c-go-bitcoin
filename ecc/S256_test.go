@@ -125,3 +125,76 @@ func TestNewS256Point(t *testing.T) {
 		})
 	}
 }
+
+func Test_s256Point_sRMul(t *testing.T) {
+	type fields struct {
+		point *point
+		n     *big.Int
+	}
+
+	tests := []struct {
+		name        string
+		fields      fields
+		coefficient *big.Int
+		want        *point
+		wantErr     bool
+	}{
+		{
+			name: "OK",
+			fields: fields{
+				point: &point{
+					x: &fieldElement{
+						number: big.NewInt(192),
+						prime:  genPrime(),
+					},
+					y: &fieldElement{
+						number: big.NewInt(105),
+						prime:  genPrime(),
+					},
+					a: &fieldElement{
+						number: big.NewInt(0),
+						prime:  genPrime(),
+					},
+					b: &fieldElement{
+						number: big.NewInt(7),
+						prime:  genPrime(),
+					},
+				},
+				n: mustGetFromHex("0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141"),
+			},
+			coefficient: big.NewInt(3),
+			want: &point{
+				x: &fieldElement{
+					number: mustGetFromHex("0x6cccdbe1d22d7bcc12df177da0d6e6ec4b790f5da805b983d7b1bea1da916b3b"),
+					prime:  genPrime(),
+				},
+				y: &fieldElement{
+					number: mustGetFromHex("0x26a9359a5f73ddcad408ff41ce4eb5213564ff9cfecd53877a84b0ce8d209fb9"),
+					prime:  genPrime(),
+				},
+				a: &fieldElement{
+					number: big.NewInt(0),
+					prime:  genPrime(),
+				},
+				b: &fieldElement{
+					number: big.NewInt(7),
+					prime:  genPrime(),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := s256Point{
+				point: tt.fields.point,
+				n:     tt.fields.n,
+			}
+			if err := s.SRMul(tt.coefficient); (err != nil) != tt.wantErr {
+				t.Errorf("s256Point.sRMul() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !s.Eq(tt.want) {
+				t.Errorf("point.SRMul() = x:%v y:%v want x:%v y:%v", s.x.number, s.y.number, tt.want.x.number, tt.want.y.number)
+			}
+		})
+	}
+}
