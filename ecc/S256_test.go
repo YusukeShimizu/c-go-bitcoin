@@ -198,3 +198,145 @@ func Test_s256Point_sRMul(t *testing.T) {
 		})
 	}
 }
+
+func Test_genG(t *testing.T) {
+	tests := []struct {
+		name    string
+		want    *s256Point
+		wantErr bool
+	}{
+		{
+			name: "OK",
+			want: &s256Point{
+				point: &point{
+					x: &fieldElement{
+						number: mustGetFromHex("0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"),
+						prime:  genPrime(),
+					},
+					y: &fieldElement{
+						number: mustGetFromHex("0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"),
+						prime:  genPrime(),
+					},
+					a: &fieldElement{
+						number: big.NewInt(0),
+						prime:  genPrime(),
+					},
+					b: &fieldElement{
+						number: big.NewInt(7),
+						prime:  genPrime(),
+					},
+				},
+				n: nil,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := genG()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("genG() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !got.Eq(tt.want.point) {
+				t.Errorf("point.SRMul() = x:%v y:%v want x:%v y:%v", got.x.number, got.y.number, tt.want.x.number, tt.want.y.number)
+			}
+			_ = got.SRMul(got.n)
+			if got.x != nil || got.y != nil {
+				t.Errorf("got should be infinity but got x:%v, y:%v", got.x, got.y)
+			}
+
+		})
+	}
+}
+
+func Test_Pubpoint(t *testing.T) {
+	tests := []struct {
+		name   string
+		secret *big.Int
+		x      *big.Int
+		y      *big.Int
+	}{
+		{
+			name:   "OK case1",
+			secret: big.NewInt(7),
+			x:      mustGetFromHex("0x5cbdf0646e5db4eaa398f365f2ea7a0e3d419b7e0330e39ce92bddedcac4f9bc"),
+			y:      mustGetFromHex("0x6aebca40ba255960a3178d6d861a54dba813d0b813fde7b5a5082628087264da"),
+		},
+		{
+			name:   "OK case2",
+			secret: big.NewInt(1485),
+			x:      mustGetFromHex("0xc982196a7466fbbbb0e27a940b6af926c1a74d5ad07128c82824a11b5398afda"),
+			y:      mustGetFromHex("0x7a91f9eae64438afb9ce6448a1c133db2d8fb9254e4546b6f001637d50901f55"),
+		},
+		{
+			name:   "OK case3",
+			secret: big.NewInt(0).Exp(big.NewInt(2), big.NewInt(128), nil),
+			x:      mustGetFromHex("0x8f68b9d2f63b5f339239c1ad981f162ee88c5678723ea3351b7b444c9ec4c0da"),
+			y:      mustGetFromHex("0x662a9f2dba063986de1d90c2b6be215dbbea2cfe95510bfdf23cbf79501fff82"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s, err := NewS256Point(tt.x, tt.y)
+			if err != nil {
+				t.Fatal(err)
+			}
+			g, err := genG()
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = g.SRMul(tt.secret)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !s.Eq(g.point) {
+				t.Errorf("x:%v y:%v want x:%v y:%v", g.x.number, g.y.number, s.x.number, s.y.number)
+			}
+		})
+	}
+}
+
+func Test_s256Point_Verify(t *testing.T) {
+	type args struct {
+		x   *big.Int
+		y   *big.Int
+		z   *big.Int
+		sig signature
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    bool
+		wantErr bool
+	}{
+		{
+			name: "Ok",
+			args: args{
+				x: mustGetFromHex("0x887387e452b8eacc4acfde10d9aaf7f6d9a0f975aabb10d006e4da568744d06c"),
+				y: mustGetFromHex("0x61de6d95231cd89026e286df3b6ae4a894a3378e393e93a0f45b666329a0ae34"),
+				z: mustGetFromHex("0xec208baa0fc1c19f708a9ca96fdeff3ac3f230bb4a7ba4aede4942ad003c0f60"),
+				sig: signature{
+					r: mustGetFromHex("0xac8d1c87e51d0d441be8b3dd5b05c8795b48875dffe00b7ffcfac23010d3a395"),
+					s: mustGetFromHex("0x68342ceff8935ededd102dd876ffd6ba72d6a427a3edb13d26eb0781cb423c4"),
+				},
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s, err := NewS256Point(tt.args.x, tt.args.y)
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, err := s.Verify(tt.args.z, tt.args.sig)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("s256Point.Verify() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("s256Point.Verify() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

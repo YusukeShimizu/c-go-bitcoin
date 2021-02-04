@@ -60,6 +60,53 @@ func NewS256Point(bx, by *big.Int) (*s256Point, error) {
 	return &s256Point{sp, n}, nil
 }
 
+func genG() (*s256Point, error) {
+	gxhex := "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
+	gx, ok := new(big.Int).SetString(gxhex, 0)
+	if !ok {
+		return nil, xerrors.Errorf("coundn't generate x of the generator point G from hex:,%s", gxhex)
+	}
+	gyhex := "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+	gy, ok := new(big.Int).SetString(gyhex, 0)
+	if !ok {
+		return nil, xerrors.Errorf("coundn't generate y of the generator point G from hex:,%s", gxhex)
+	}
+	return NewS256Point(gx, gy)
+}
+
 func (s s256Point) SRMul(coefficient *big.Int) error {
 	return s.FastRMul(coefficient.Mod(coefficient, s.n))
+}
+
+func (s s256Point) Verify(z *big.Int, sig signature) (bool, error) {
+	s_inv := big.NewInt(0).Exp(sig.s, s.n.Sub(s.n, big.NewInt(2)), s.n)
+	u := big.NewInt(0).Mul(z, s_inv)
+	u = u.Div(u, s.n)
+	v := big.NewInt(0).Mul(sig.r, s_inv)
+	v = v.Div(u, s.n)
+
+	g, err := genG()
+	if err != nil {
+		return false, err
+	}
+	err = g.SRMul(u)
+	if err != nil {
+		return false, err
+	}
+
+	sCopy, err := NewS256Point(s.x.number, s.y.number)
+	if err != nil {
+		return false, err
+	}
+	err = sCopy.SRMul(v)
+	if err != nil {
+		return false, err
+	}
+
+	err = g.Add(sCopy.point)
+	if err != nil {
+		return false, err
+	}
+
+	return g.x.number.Cmp(sig.r) == 0, nil
 }
