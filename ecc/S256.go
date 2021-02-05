@@ -1,6 +1,7 @@
 package ecc
 
 import (
+	"fmt"
 	"math/big"
 
 	"golang.org/x/xerrors"
@@ -79,34 +80,37 @@ func (s s256Point) SRMul(coefficient *big.Int) error {
 }
 
 func (s s256Point) Verify(z *big.Int, sig signature) (bool, error) {
-	s_inv := big.NewInt(0).Exp(sig.s, s.n.Sub(s.n, big.NewInt(2)), s.n)
+	// s_inv = pow(sig.s, N - 2, N)
+	s_inv := big.NewInt(0).Exp(sig.s, big.NewInt(0).Sub(s.n, big.NewInt(2)), s.n)
+	// u = z * s_inv % N
 	u := big.NewInt(0).Mul(z, s_inv)
-	u = u.Div(u, s.n)
+	u = u.Mod(u, s.n)
+	// v = sig.r * s_inv % N
 	v := big.NewInt(0).Mul(sig.r, s_inv)
-	v = v.Div(u, s.n)
-
+	v = v.Mod(v, s.n)
+	// total = u * G + v * self
 	g, err := genG()
 	if err != nil {
 		return false, err
 	}
+	// u * G
 	err = g.SRMul(u)
 	if err != nil {
 		return false, err
 	}
-
 	sCopy, err := NewS256Point(s.x.number, s.y.number)
 	if err != nil {
 		return false, err
 	}
+	// v * self
 	err = sCopy.SRMul(v)
 	if err != nil {
 		return false, err
 	}
-
+	fmt.Printf("v*self:%s", sCopy.x.number.String())
 	err = g.Add(sCopy.point)
 	if err != nil {
 		return false, err
 	}
-
 	return g.x.number.Cmp(sig.r) == 0, nil
 }
