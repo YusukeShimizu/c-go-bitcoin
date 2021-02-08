@@ -1,6 +1,7 @@
 package ecc
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -349,6 +350,61 @@ func Test_s256Point_Verify(t *testing.T) {
 			}
 			if got != tt.want {
 				t.Errorf("s256Point.Verify() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func mustDecodeString(s string) []byte {
+	b, _ := hex.DecodeString(s)
+	return b
+}
+
+// TODO: Gの生成ロジックから考え直す
+func Test_s256Point_Sec(t *testing.T) {
+
+	tests := []struct {
+		name        string
+		coefficient *big.Int
+		compressed  bool
+		wantB       []byte
+	}{
+		{
+			name:        "OK uncompressed case1",
+			coefficient: big.NewInt(123),
+			compressed:  false,
+			wantB:       mustDecodeString("04a598a8030da6d86c6bc7f2f5144ea549d28211ea58faa70ebf4c1e665c1fe9b5204b5d6f84822c307e4b4a7140737aec23fc63b65b35f86a10026dbd2d864e6b"),
+		},
+		{
+			name:        "OK uncompressed case2",
+			coefficient: big.NewInt(42424242),
+			compressed:  false,
+			wantB:       mustDecodeString("04aee2e7d843f7430097859e2bc603abcc3274ff8169c1a469fee0f20614066f8e21ec53f40efac47ac1c5211b2123527e0e9b57ede790c4da1e72c91fb7da54a3"),
+		},
+		{
+			name:        "OK compressed case1",
+			coefficient: big.NewInt(123),
+			compressed:  true,
+			wantB:       mustDecodeString("03a598a8030da6d86c6bc7f2f5144ea549d28211ea58faa70ebf4c1e665c1fe9b5"),
+		},
+		{
+			name:        "OK compressed case2",
+			coefficient: big.NewInt(42424242),
+			compressed:  true,
+			wantB:       mustDecodeString("03aee2e7d843f7430097859e2bc603abcc3274ff8169c1a469fee0f20614066f8e"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g, err := genG()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := g.SRMul(tt.coefficient); err != nil {
+				t.Fatal(err)
+			}
+			if gotB := g.Sec(tt.compressed); !reflect.DeepEqual(gotB, tt.wantB) {
+				t.Errorf("s256Point.Sec() = %v, want %v", gotB, tt.wantB)
 			}
 		})
 	}
