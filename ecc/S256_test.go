@@ -360,7 +360,6 @@ func mustDecodeString(s string) []byte {
 	return b
 }
 
-// TODO: Gの生成ロジックから考え直す
 func Test_s256Point_Sec(t *testing.T) {
 
 	tests := []struct {

@@ -2,9 +2,12 @@ package ecc
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"fmt"
+	"hash"
 	"math/big"
 
+	"golang.org/x/crypto/ripemd160"
 	"golang.org/x/xerrors"
 )
 
@@ -134,4 +137,15 @@ func (s s256Point) Sec(compressed bool) (b []byte) {
 		return append([]byte{0x02}, padded_x...)
 	}
 	return append([]byte{0x03}, padded_x...)
+}
+
+// Calculate the hash of hasher over buf.
+func calcHash(buf []byte, hasher hash.Hash) []byte {
+	hasher.Write(buf)
+	return hasher.Sum(nil)
+}
+
+// Hash160 calculates the hash ripemd160(sha256(b)).
+func Hash160(buf []byte) []byte {
+	return calcHash(calcHash(buf, sha256.New()), ripemd160.New())
 }
