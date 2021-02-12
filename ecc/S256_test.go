@@ -408,3 +408,56 @@ func Test_s256Point_Sec(t *testing.T) {
 		})
 	}
 }
+
+func Test_s256Point_Addresses(t *testing.T) {
+	tests := []struct {
+		name        string
+		coefficient *big.Int
+		compressed  bool
+		testnet     bool
+		want        string
+	}{
+		{
+			name:        "OK uncompressed testnet",
+			coefficient: big.NewInt(321),
+			compressed:  false,
+			testnet:     true,
+			want:        "mfx3y63A7TfTtXKkv7Y6QzsPFY6QCBCXiP",
+		},
+		{
+			name:        "OK uncompressed mainnet",
+			coefficient: big.NewInt(321),
+			compressed:  false,
+			testnet:     false,
+			want:        "1S6g2xBJSED7Qr9CYZib5f4PYVhHZiVfj",
+		},
+		{
+			name:        "OK compressed testnet",
+			coefficient: big.NewInt(0).Exp(big.NewInt(888), big.NewInt(3), nil),
+			compressed:  true,
+			testnet:     true,
+			want:        "mieaqB68xDCtbUBYFoUNcmZNwk74xcBfTP",
+		},
+		{
+			name:        "OK compressed mainnet",
+			coefficient: big.NewInt(0).Exp(big.NewInt(888), big.NewInt(3), nil),
+			compressed:  true,
+			testnet:     false,
+			want:        "148dY81A9BmdpMhvYEVznrM45kWN32vSCN",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g, err := genG()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := g.SRMul(tt.coefficient); err != nil {
+				t.Fatal(err)
+			}
+			if got := g.Addresses(tt.compressed, tt.testnet); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("s256Point.Sec() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

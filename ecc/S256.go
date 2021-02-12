@@ -7,6 +7,7 @@ import (
 	"hash"
 	"math/big"
 
+	"github.com/btcsuite/btcutil/base58"
 	"golang.org/x/crypto/ripemd160"
 	"golang.org/x/xerrors"
 )
@@ -148,4 +149,22 @@ func calcHash(buf []byte, hasher hash.Hash) []byte {
 // Hash160 calculates the hash ripemd160(sha256(b)).
 func Hash160(buf []byte) []byte {
 	return calcHash(calcHash(buf, sha256.New()), ripemd160.New())
+}
+
+// [hash]=SHA256(SHA256([data]))
+func Hash256(buf []byte) []byte {
+	return calcHash(calcHash(buf, sha256.New()), sha256.New())
+}
+
+func (s s256Point) Addresses(compressed, testnet bool) string {
+	h160 := Hash160(s.Sec(compressed))
+	var prefix []byte
+	if testnet {
+		prefix = []byte{0x6f}
+	} else {
+		prefix = []byte{0x00}
+	}
+	h160WithPrefix := append(prefix, h160...)
+	h160WithCheckSum := append(h160WithPrefix, Hash256(h160WithPrefix)[0:4]...)
+	return base58.Encode(h160WithCheckSum)
 }
