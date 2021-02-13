@@ -7,6 +7,6 @@ type signature struct {
 	s *big.Int
 }
 
-func newSignature(r *big.Int, s *big.Int) *signature {
-	return &signature{r, s}
-}
+// func newSignature(r *big.Int, s *big.Int) *signature {
+// 	return &signature{r, s}
+// }
