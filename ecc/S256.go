@@ -172,7 +172,7 @@ func (s s256Point) Addresses(compressed, testnet bool) string {
 	return base58.Encode(h160WithCheckSum)
 }
 
-func parse(bin []byte) (*s256Point, error) {
+func Parse(bin []byte) (*s256Point, error) {
 	big.NewInt(0).SetBytes(bin)
 	// TODO:https://github.com/btcsuite/btcd/blob/master/btcec/pubkey.go#L79
 	return nil, nil
