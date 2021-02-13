@@ -142,7 +142,10 @@ func (s s256Point) Sec(compressed bool) (b []byte) {
 
 // Calculate the hash of hasher over buf.
 func calcHash(buf []byte, hasher hash.Hash) []byte {
-	hasher.Write(buf)
+	_, err := hasher.Write(buf)
+	if err != nil {
+		fmt.Println(err)
+	}
 	return hasher.Sum(nil)
 }
 
@@ -167,4 +170,10 @@ func (s s256Point) Addresses(compressed, testnet bool) string {
 	h160WithPrefix := append(prefix, h160...)
 	h160WithCheckSum := append(h160WithPrefix, Hash256(h160WithPrefix)[0:4]...)
 	return base58.Encode(h160WithCheckSum)
+}
+
+func parse(bin []byte) (*s256Point, error) {
+	big.NewInt(0).SetBytes(bin)
+	// TODO:https://github.com/btcsuite/btcd/blob/master/btcec/pubkey.go#L79
+	return nil, nil
 }
