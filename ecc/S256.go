@@ -173,7 +173,88 @@ func (s s256Point) Addresses(compressed, testnet bool) string {
 }
 
 func Parse(bin []byte) (*s256Point, error) {
-	big.NewInt(0).SetBytes(bin)
-	// TODO:https://github.com/btcsuite/btcd/blob/master/btcec/pubkey.go#L79
-	return nil, nil
+	// obtain marker
+	format := bin[0]
+	// uncompressed
+	if format == byte(0x4) {
+		x := new(big.Int).SetBytes(bin[1:33])
+		y := new(big.Int).SetBytes(bin[33:])
+		return NewS256Point(x, y)
+	}
+	x, err := NewFieldElement(new(big.Int).SetBytes(bin[1:]), genPrime())
+	if err != nil {
+		return nil, err
+	}
+	right, err := NewFieldElement(big.NewInt(0), x.prime)
+	if err != nil {
+		return nil, err
+	}
+	right, err = right.Pow(x, big.NewInt(3))
+	if err != nil {
+		return nil, err
+	}
+	ax, err := NewFieldElement(big.NewInt(0), x.prime)
+	if err != nil {
+		return nil, err
+	}
+	a, err := NewFieldElement(big.NewInt(0), x.prime)
+	if err != nil {
+		return nil, err
+	}
+	b, err := NewFieldElement(big.NewInt(7), x.prime)
+	if err != nil {
+		return nil, err
+	}
+	axplusb, err := ax.Mul(a, x)
+	if err != nil {
+		return nil, err
+	}
+	axplusb, err = axplusb.Add(axplusb, b)
+	if err != nil {
+		return nil, err
+	}
+	right, err = right.Add(right, axplusb)
+	if err != nil {
+		return nil, err
+	}
+	// left = right**((P + 1) / 4)
+	p := big.NewInt(0).Add(genPrime(), big.NewInt(1))
+	p = p.Div(p, big.NewInt(4))
+	left, err := NewFieldElement(big.NewInt(0), x.prime)
+	if err != nil {
+		return nil, err
+	}
+	left, err = left.Pow(right, p)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("right:%x", right.number)
+	fmt.Println()
+	fmt.Printf("left:%x", left.number)
+	fmt.Println()
+	var (
+		evenLeft *fieldElement
+		oddLeft  *fieldElement
+	)
+	if big.NewInt(0).Mod(left.number, big.NewInt(2)).Cmp(big.NewInt(0)) == 0 {
+		evenLeft = left
+		oddLeft, err = NewS256Field(
+			big.NewInt(0).Sub(genPrime(), left.number),
+		)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		oddLeft = left
+		evenLeft, err = NewS256Field(
+			big.NewInt(0).Sub(genPrime(), left.number),
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if format == byte(0x2) {
+		return NewS256Point(x.number, evenLeft.number)
+	}
+	return NewS256Point(x.number, oddLeft.number)
 }

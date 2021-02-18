@@ -461,3 +461,100 @@ func Test_s256Point_Addresses(t *testing.T) {
 		})
 	}
 }
+
+func Test_parse(t *testing.T) {
+	tests := []struct {
+		name    string
+		in      []byte
+		want    *s256Point
+		wantErr bool
+	}{
+		{
+			name: "OK",
+			in:   mustDecodeString("04aee2e7d843f7430097859e2bc603abcc3274ff8169c1a469fee0f20614066f8e21ec53f40efac47ac1c5211b2123527e0e9b57ede790c4da1e72c91fb7da54a3"),
+			want: &s256Point{
+				point: &point{
+					x: &fieldElement{
+						number: mustGetFromHex("0xaee2e7d843f7430097859e2bc603abcc3274ff8169c1a469fee0f20614066f8e"),
+						prime:  genPrime(),
+					},
+					y: &fieldElement{
+						number: mustGetFromHex("0x21ec53f40efac47ac1c5211b2123527e0e9b57ede790c4da1e72c91fb7da54a3"),
+						prime:  genPrime(),
+					},
+					a: &fieldElement{
+						number: big.NewInt(0),
+						prime:  genPrime(),
+					},
+					b: &fieldElement{
+						number: big.NewInt(7),
+						prime:  genPrime(),
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "OK if compressed",
+			in:   mustDecodeString("03aee2e7d843f7430097859e2bc603abcc3274ff8169c1a469fee0f20614066f8e"),
+			want: &s256Point{
+				point: &point{
+					x: &fieldElement{
+						number: mustGetFromHex("0xaee2e7d843f7430097859e2bc603abcc3274ff8169c1a469fee0f20614066f8e"),
+						prime:  genPrime(),
+					},
+					y: &fieldElement{
+						number: mustGetFromHex("0x21ec53f40efac47ac1c5211b2123527e0e9b57ede790c4da1e72c91fb7da54a3"),
+						prime:  genPrime(),
+					},
+					a: &fieldElement{
+						number: big.NewInt(0),
+						prime:  genPrime(),
+					},
+					b: &fieldElement{
+						number: big.NewInt(7),
+						prime:  genPrime(),
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "OK if compressed with odd",
+			in:   mustDecodeString("02aee2e7d843f7430097859e2bc603abcc3274ff8169c1a469fee0f20614066f8e"),
+			want: &s256Point{
+				point: &point{
+					x: &fieldElement{
+						number: mustGetFromHex("0xaee2e7d843f7430097859e2bc603abcc3274ff8169c1a469fee0f20614066f8e"),
+						prime:  genPrime(),
+					},
+					y: &fieldElement{
+						number: mustGetFromHex("0xde13ac0bf1053b853e3adee4dedcad81f164a812186f3b25e18d36df4825a78c"),
+						prime:  genPrime(),
+					},
+					a: &fieldElement{
+						number: big.NewInt(0),
+						prime:  genPrime(),
+					},
+					b: &fieldElement{
+						number: big.NewInt(7),
+						prime:  genPrime(),
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Parse(tt.in)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parse() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !got.point.Eq(tt.want.point) {
+				t.Errorf("parse() = x:%v y:%v want x:%v y:%v", got.x.number, got.y.number, tt.want.x.number, tt.want.y.number)
+			}
+		})
+	}
+}
