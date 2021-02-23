@@ -302,7 +302,7 @@ func Test_s256Point_Verify(t *testing.T) {
 		x   *big.Int
 		y   *big.Int
 		z   *big.Int
-		sig signature
+		sig Signature
 	}
 	tests := []struct {
 		name    string
@@ -316,7 +316,7 @@ func Test_s256Point_Verify(t *testing.T) {
 				x: mustGetFromHex("0x887387e452b8eacc4acfde10d9aaf7f6d9a0f975aabb10d006e4da568744d06c"),
 				y: mustGetFromHex("0x61de6d95231cd89026e286df3b6ae4a894a3378e393e93a0f45b666329a0ae34"),
 				z: mustGetFromHex("0xec208baa0fc1c19f708a9ca96fdeff3ac3f230bb4a7ba4aede4942ad003c0f60"),
-				sig: signature{
+				sig: Signature{
 					r: mustGetFromHex("0xac8d1c87e51d0d441be8b3dd5b05c8795b48875dffe00b7ffcfac23010d3a395"),
 					s: mustGetFromHex("0x68342ceff8935ededd102dd876ffd6ba72d6a427a3edb13d26eb0781cb423c4"),
 				},
@@ -329,7 +329,7 @@ func Test_s256Point_Verify(t *testing.T) {
 				x: mustGetFromHex("0x887387e452b8eacc4acfde10d9aaf7f6d9a0f975aabb10d006e4da568744d06c"),
 				y: mustGetFromHex("0x61de6d95231cd89026e286df3b6ae4a894a3378e393e93a0f45b666329a0ae34"),
 				z: mustGetFromHex("0x7c076ff316692a3d7eb3c3bb0f8b1488cf72e1afcd929e29307032997a838a3d"),
-				sig: signature{
+				sig: Signature{
 					r: mustGetFromHex("0xeff69ef2b1bd93a66ed5219add4fb51e11a840f404876325a1e8ffe0529a2c"),
 					s: mustGetFromHex("0xc7207fee197d27c618aea621406f6bf5ef6fca38681d82b2f06fddbdce6feab6"),
 				},
@@ -547,7 +547,7 @@ func Test_parse(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Parse(tt.in)
+			got, err := ParseSec(tt.in)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parse() error = %v, wantErr %v", err, tt.wantErr)
 				return

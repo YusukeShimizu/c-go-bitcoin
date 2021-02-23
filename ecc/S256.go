@@ -84,7 +84,7 @@ func (s s256Point) SRMul(coefficient *big.Int) error {
 	return s.FastRMul(coefficient.Mod(coefficient, s.n))
 }
 
-func (s s256Point) Verify(z *big.Int, sig signature) (bool, error) {
+func (s s256Point) Verify(z *big.Int, sig Signature) (bool, error) {
 	// s_inv = pow(sig.s, N - 2, N)
 	s_inv := big.NewInt(0).Exp(sig.s, big.NewInt(0).Sub(s.n, big.NewInt(2)), s.n)
 	// u = z * s_inv % N
@@ -172,7 +172,7 @@ func (s s256Point) Addresses(compressed, testnet bool) string {
 	return base58.Encode(h160WithCheckSum)
 }
 
-func Parse(bin []byte) (*s256Point, error) {
+func ParseSec(bin []byte) (*s256Point, error) {
 	// obtain marker
 	format := bin[0]
 	// uncompressed
@@ -228,10 +228,6 @@ func Parse(bin []byte) (*s256Point, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("right:%x", right.number)
-	fmt.Println()
-	fmt.Printf("left:%x", left.number)
-	fmt.Println()
 	var (
 		evenLeft *fieldElement
 		oddLeft  *fieldElement

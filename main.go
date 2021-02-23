@@ -2,13 +2,18 @@ package main
 
 import (
 	"fmt"
+	"math/big"
 	"os"
 
-	"golang.org/x/xerrors"
+	"github.com/btcsuite/btcd/btcec"
 )
 
 func main() {
-	fatal(xerrors.New("go bitcoin"))
+	s := btcec.Signature{
+		R: big.NewInt(100),
+		S: big.NewInt(50),
+	}
+	fmt.Println(s.Serialize())
 }
 
 func fatal(err error) {
