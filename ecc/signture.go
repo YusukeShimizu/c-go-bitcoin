@@ -2,6 +2,8 @@ package ecc
 
 import (
 	"math/big"
+
+	"golang.org/x/xerrors"
 )
 
 type Signature struct {
@@ -29,8 +31,43 @@ func (s *Signature) Der() []byte {
 	return b
 }
 
+//https://github.com/btcsuite/btcd/blob/master/btcec/signature.go#L93
 func ParseDer(der []byte) (*Signature, error) {
-	return nil, nil
+	// 0x30
+	index := 0
+	if der[index] != 0x30 {
+		return nil, xerrors.New("malformed signature: no header magic")
+	}
+	index++
+	derLen := der[index]
+	if int(derLen+2) != len(der) {
+		return nil, xerrors.New("malformed signature: bad length")
+	}
+	index++
+	marker := der[index]
+	if marker != 0x02 {
+		return nil, xerrors.New("malformed signature: bad signature")
+	}
+	index++
+	rlen := der[index]
+	index++
+	r := der[index : index+int(rlen)]
+	index++
+	marker = der[index]
+	if marker != 0x02 {
+		return nil, xerrors.New("malformed signature: bad signature")
+	}
+	index++
+	slen := der[index]
+	index++
+	s := der[index : index+int(slen)]
+	if int(len(der)) != int(6+rlen+slen) {
+		return nil, xerrors.New("malformed signature: bad length")
+	}
+	return NewSignature(
+		new(big.Int).SetBytes(r),
+		new(big.Int).SetBytes(s),
+	), nil
 }
 func lstrip(bs []byte) []byte {
 	lstriped := []byte{}
