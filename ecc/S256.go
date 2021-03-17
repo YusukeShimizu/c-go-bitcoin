@@ -112,7 +112,6 @@ func (s s256Point) Verify(z *big.Int, sig Signature) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	fmt.Printf("v*self:%s", sCopy.x.number.String())
 	err = g.Add(sCopy.point)
 	if err != nil {
 		return false, err

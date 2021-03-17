@@ -6,14 +6,29 @@ import (
 	"os"
 
 	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
 
 func main() {
-	s := btcec.Signature{
-		R: big.NewInt(100),
-		S: big.NewInt(50),
+	// Decode a hex-encoded private key.
+	privKey, pubKey := btcec.PrivKeyFromBytes(btcec.S256(), big.NewInt(10).Bytes())
+	// Sign a message using the private key.
+	message := "test message"
+	messageHash := chainhash.DoubleHashB([]byte(message))
+	signature, err := privKey.Sign(messageHash)
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
-	fmt.Println(s.Serialize())
+
+	// Serialize and display the signature.
+	fmt.Printf("Serialized Signature: %x\n", signature.Serialize())
+	fmt.Printf("Signature R: %x\n", signature.R.String())
+	fmt.Printf("Signature S: %x\n", signature.S.String())
+
+	// Verify the signature for the message using the public key.
+	verified := signature.Verify(messageHash, pubKey)
+	fmt.Printf("Signature Verified? %v\n", verified)
 }
 
 func fatal(err error) {
